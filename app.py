@@ -6,7 +6,6 @@ import joblib
 import os
 import io
 import base64
-from imblearn.over_sampling import SMOTE
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
@@ -339,4 +338,5 @@ if __name__ == "__main__":
     app.run(debug=True)
     port = int(os.environ.get("PORT", 5000))
     # host 0.0.0.0 para que sea accesible externamente
+
     app.run(host="0.0.0.0", port=port)
