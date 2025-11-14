@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Predicción por Lotes - Proyecto Analítica</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(135deg, #e8f0ff, #bcd3ff);
+      min-height: 100vh;
+    }
+
+    .card {
+      border: none;
+      border-radius: 12px;
+      box-shadow: 0 4px 25px rgba(0, 0, 0, 0.1);
+      max-width: 1100px;
+      margin: 50px auto;
+    }
+
+    .card-header {
+      background: #007bff;
+      border-radius: 12px 12px 0 0;
+      color: white;
+      text-align: center;
+      font-size: 1.4rem;
+      font-weight: 500;
+    }
+
+    .btn-primary {
+      background: #007bff;
+      border: none;
+      transition: 0.3s;
+    }
+
+    .btn-primary:hover {
+      background: #0056b3;
+    }
+
+    .alert {
+      margin-top: 15px;
+      font-weight: 500;
+      text-align: center;
+    }
+
+    /* --- Tabla --- */
+    .table-container {
+      max-height: 65vh;
+      overflow-y: auto;
+      border-radius: 10px;
+      margin-top: 25px;
+      border: 1px solid #dee2e6;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 13px;
+      background-color: white;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      background: #007bff;
+      color: white;
+      padding: 10px;
+      text-align: center;
+      white-space: nowrap;
+      border-bottom: 2px solid #0056b3;
+    }
+
+    tbody td {
+      padding: 8px 12px;
+      text-align: center;
+      border-bottom: 1px solid #eef1ff;
+    }
+
+    tbody tr:nth-child(even) {
+      background-color: #f8faff;
+    }
+
+    tbody tr:hover {
+      background-color: #e6efff;
+      transition: 0.2s;
+    }
+
+    .table-container::-webkit-scrollbar {
+      height: 10px;
+    }
+
+    .table-container::-webkit-scrollbar-thumb {
+      background-color: #007bff;
+      border-radius: 10px;
+    }
+
+    /* --- Métricas --- */
+    .metricas {
+      margin-top: 35px;
+      background: white;
+      border-radius: 10px;
+      border: 1px solid #dde5ff;
+      padding: 20px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .metricas h5 {
+      text-align: center;
+      color: #004080;
+      margin-bottom: 15px;
+      font-weight: 600;
+    }
+
+    .metricas ul {
+      list-style: none;
+      padding: 0;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .metricas li {
+      background: #f0f5ff;
+      border: 1px solid #c9d8ff;
+      border-radius: 8px;
+      padding: 10px 20px;
+      font-weight: 600;
+      color: #004080;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    /* --- Matriz de confusión --- */
+    .matriz {
+      text-align: center;
+      margin-top: 30px;
+    }
+
+    .matriz img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    /* --- Botón volver --- */
+    .volver-btn {
+      background: #6c8cff;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      padding: 10px 25px;
+      transition: 0.3s;
+      display: inline-block;
+      margin-top: 25px;
+    }
+
+    .volver-btn:hover {
+      background: #4a6ed6;
+      text-decoration: none;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card shadow-lg border-0">
+    <div class="card-header">
+      Predicción por Lotes
+    </div>
+
+    <div class="card-body">
+      <p class="text-center text-muted">
+        Sube tu archivo Excel o CSV para procesar múltiples registros a la vez.
+      </p>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, msg in messages %}
+            <div class="alert alert-{{ category }}">{{ msg }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <form method="POST" enctype="multipart/form-data" class="mt-3">
+        <div class="row align-items-center justify-content-center g-3">
+          <div class="col-md-5">
+            <input type="file" name="dataset" accept=".xls,.xlsx,.csv" class="form-control" required>
+          </div>
+          <div class="col-md-4">
+            <select name="modelo" class="form-select" required>
+              <option value="logistica">Regresión Logística</option>
+              <option value="rna">Red Neuronal</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <button class="btn btn-primary w-100">Predecir</button>
+          </div>
+        </div>
+      </form>
+
+      {% if tabla %}
+      <div class="table-container mt-4">
+        {{ tabla|safe }}
+      </div>
+
+      <div class="text-center mt-3">
+        <a href="{{ url_for('descargar_resultados') }}" class="btn btn-primary">
+          ⬇️ Descargar Resultados
+        </a>
+      </div>
+      {% endif %}
+
+      {% if metricas %}
+      <div class="metricas">
+        <h5>Métricas de rendimiento - {{ model_name }}</h5>
+        <ul>
+          <li>🎯 <b>Accuracy:</b> {{ metricas.accuracy }}%</li>
+          <li>✅ <b>Precision:</b> {{ metricas.precision }}%</li>
+          <li>📊 <b>Recall:</b> {{ metricas.recall }}%</li>
+          <li>⚖️ <b>F1-Score:</b> {{ metricas.f1 }}%</li>
+        </ul>
+      </div>
+      {% endif %}
+
+      {% if cm %}
+      <div class="matriz">
+        <h5 class="mt-4 mb-3 text-primary fw-semibold">Matriz de Confusión</h5>
+        <img src="data:image/png;base64,{{ cm }}" alt="Matriz de Confusión">
+      </div>
+      {% endif %}
+
+      <div class="text-center">
+        <a href="{{ url_for('index') }}" class="volver-btn">← Volver al inicio</a>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
